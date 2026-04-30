@@ -16,6 +16,7 @@ repos:
         src/host|
         src/osal|
         src/portable|
+        src/typec|
         src/tusb_option.h|
         src/tusb.c|
         src/tusb.h

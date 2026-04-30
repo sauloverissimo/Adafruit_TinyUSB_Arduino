@@ -261,9 +261,6 @@
 // Allow to use command line to change the config name/location
 #ifdef CFG_TUSB_CONFIG_FILE
   #include CFG_TUSB_CONFIG_FILE
-#elif defined(ARDUINO_ARCH_ESP32)
-  // ESP32 out-of-sync
-  #include "arduino/ports/esp32/tusb_config_esp32.h"
 #else
   #include "tusb_config.h"
 #endif
@@ -652,6 +649,48 @@
   #define CFG_TUD_MIDI            0
 #endif
 
+#ifndef CFG_TUD_MIDI2
+  #define CFG_TUD_MIDI2           0
+#endif
+
+#ifndef CFG_TUD_MIDI2_TX_BUFSIZE
+  #define CFG_TUD_MIDI2_TX_BUFSIZE  256
+#endif
+
+#ifndef CFG_TUD_MIDI2_RX_BUFSIZE
+  #define CFG_TUD_MIDI2_RX_BUFSIZE  256
+#endif
+
+#ifndef CFG_TUD_MIDI2_TX_EPSIZE
+  #define CFG_TUD_MIDI2_TX_EPSIZE   64
+#endif
+
+#ifndef CFG_TUD_MIDI2_RX_EPSIZE
+  #define CFG_TUD_MIDI2_RX_EPSIZE   64
+#endif
+
+#ifndef CFG_TUD_MIDI2_NUM_GROUPS
+  #define CFG_TUD_MIDI2_NUM_GROUPS  1
+#endif
+
+#ifndef CFG_TUD_MIDI2_NUM_FUNCTION_BLOCKS
+  #define CFG_TUD_MIDI2_NUM_FUNCTION_BLOCKS 1
+#endif
+
+#ifndef CFG_TUD_MIDI2_EP_NAME
+  #define CFG_TUD_MIDI2_EP_NAME     "TinyUSB MIDI 2.0"
+#endif
+
+#ifndef CFG_TUD_MIDI2_PRODUCT_ID
+  #define CFG_TUD_MIDI2_PRODUCT_ID  "TinyUSB-MIDI2"
+#endif
+
+// String descriptor index for the Group Terminal Block (iBlockItem, Table 5-6).
+// 0 = no string descriptor (default, spec-allowed).
+#ifndef CFG_TUD_MIDI2_BLOCK_STRIDX
+  #define CFG_TUD_MIDI2_BLOCK_STRIDX 0
+#endif
+
 #ifndef CFG_TUD_VENDOR
   #define CFG_TUD_VENDOR          0
 #endif
@@ -819,6 +858,22 @@
 
 #ifndef CFG_TUH_MIDI
   #define CFG_TUH_MIDI   0
+#endif
+
+#ifndef CFG_TUH_MIDI2
+  #define CFG_TUH_MIDI2  0
+#endif
+
+#ifndef CFG_TUH_MIDI2_RX_BUFSIZE
+  #define CFG_TUH_MIDI2_RX_BUFSIZE (4 * TUH_EPSIZE_BULK_MAX)
+#endif
+
+#ifndef CFG_TUH_MIDI2_TX_BUFSIZE
+  #define CFG_TUH_MIDI2_TX_BUFSIZE (4 * TUH_EPSIZE_BULK_MAX)
+#endif
+
+#ifndef CFG_TUH_MIDI2_LOG_LEVEL
+  #define CFG_TUH_MIDI2_LOG_LEVEL CFG_TUH_LOG_LEVEL
 #endif
 
 #ifndef CFG_TUH_MSC
