@@ -1,0 +1,100 @@
+name: CI MIDI 2.0
+
+# Independent CI for the feat/midi2 branch. Compiles
+# examples/MIDI2/midi2_test/midi2_test.ino against one FQBN per Phase 1
+# chip family (SAMD21, nRF52840, RP2040 via Earle Philhower core). Does
+# NOT extend the upstream githubci.yml workflow because the upstream CI
+# is orchestrated by adafruit/ci-arduino and compiles ALL examples for
+# ALL platforms; our MIDI 2.0 sketch needs -DCFG_TUD_MIDI2=1 which the
+# orchestration does not provide.
+#
+# Triggers only on the MIDI 2.0 branch and pull requests targeting it,
+# so upstream CI cycles are not consumed for internal fork work.
+
+on:
+  push:
+    branches:
+      - feat/midi2
+  pull_request:
+    branches:
+      - feat/midi2
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  midi2-build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # SAMD21: Adafruit's Metro M0 (matches upstream Adafruit's own
+          # CI choice in tools/build_all.py). Seeed's XIAO SAMD21 core
+          # does NOT support the usbstack=tinyusb build option, so its
+          # FQBN cannot be used to validate Adafruit_TinyUSB_Arduino.
+          # The XIAO SAMD21 hardware test in midi2_cpp/examples/ uses a
+          # different toolchain path (TinyUSB direct).
+          - name: midi2_metro_m0
+            fqbn: adafruit:samd:adafruit_metro_m0:usbstack=tinyusb
+            url: https://adafruit.github.io/arduino-board-index/package_adafruit_index.json
+          # nRF52840: Adafruit Feather nRF52840 Express. Same package
+          # would also resolve nice_nano if it shipped in Adafruit's
+          # core, but as of 2026 nice_nano lives in the Nordic / community
+          # package, not Adafruit's. feather52840 matches upstream CI.
+          - name: midi2_feather_nrf52840
+            fqbn: adafruit:nrf52:feather52840
+            url: https://adafruit.github.io/arduino-board-index/package_adafruit_index.json
+          # RP2040: Earle Philhower core (the one that supports
+          # usbstack=tinyusb on RP2040 family).
+          - name: midi2_pico_earlephilhower
+            fqbn: rp2040:rp2040:rpipico:usbstack=tinyusb
+            url: https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+
+      - name: Install arduino-cli
+        uses: arduino/setup-arduino-cli@v2
+
+      - name: Configure board manager URL
+        run: |
+          arduino-cli config init --overwrite
+          arduino-cli config add board_manager.additional_urls "${{ matrix.url }}"
+          arduino-cli core update-index
+
+      - name: Install platform core
+        run: |
+          PLATFORM=$(echo "${{ matrix.fqbn }}" | cut -d: -f1-2)
+          arduino-cli core install "${PLATFORM}"
+
+      - name: Install nRF52 toolchain extras (adafruit-nrfutil)
+        if: contains(matrix.fqbn, 'nrf52')
+        run: |
+          # Adafruit nRF52 core's post-compile step invokes
+          # adafruit-nrfutil to package DFU firmware; not needed for
+          # actually flashing in CI but the build process expects it on
+          # PATH and fails compile otherwise.
+          pip3 install adafruit-nrfutil
+
+      - name: Symlink fork as a library so arduino-cli sees it
+        run: |
+          mkdir -p $HOME/Arduino/libraries
+          ln -sfn "${GITHUB_WORKSPACE}" $HOME/Arduino/libraries/Adafruit_TinyUSB_Arduino
+
+      - name: Compile midi2_test smoke-test sketch
+        run: |
+          arduino-cli compile \
+            --fqbn "${{ matrix.fqbn }}" \
+            --warnings all \
+            examples/MIDI2/midi2_test/
+
+      - name: Report sketch size
+        run: |
+          arduino-cli compile \
+            --fqbn "${{ matrix.fqbn }}" \
+            --show-properties=expanded \
+            examples/MIDI2/midi2_test/ 2>/dev/null | grep -E "Sketch uses|Global variables" || true

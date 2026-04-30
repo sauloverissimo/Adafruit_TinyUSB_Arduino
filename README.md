@@ -27,6 +27,51 @@ Host stack is available with either addition of MAX3421E hardware (e.g [Host Fea
 
 Note: Host stack is still work-in-progress
 
+## MIDI 2.0 (override)
+
+> ⚠️ **TinyUSB override, not yet upstream.** This branch (`feat/midi2`) carries the TinyUSB [PR #3571](https://github.com/hathach/tinyusb/pull/3571) tree vendored at SHA `31d730d8bb0b5c0832c5490378a2a2dd60ab72aa`, plus two new Arduino classes (`Adafruit_USBD_MIDI2` and `Adafruit_USBH_MIDI2`) wrapping the new `tud_midi2_n_*` and `tuh_midi2_*` C APIs. Until PR #3571 merges into `hathach/tinyusb` and Adafruit upstream bumps its bundled TinyUSB to a version that includes it, this fork stays internal. Treat it as **beta**.
+
+### What changes vs upstream
+
+- `src/{class,device,host,portable,common,osal}` and the three root tusb files are wholesale-synced to `sauloverissimo/tinyusb` at the pinned SHA above. `tools/sync_tinyusb_fork.sh` is idempotent; bump the SHA and re-run when the PR #3571 fork advances.
+- Two new Arduino classes:
+  - `Adafruit_USBD_MIDI2` (device): wraps `tud_midi2_n_*` (32-bit UMP read/write, 4-byte cable event read/write, mounted/altSetting/negotiated/protocol accessors). Emits `TUD_MIDI2_DESCRIPTOR` with dual-alt (alt 0 MIDI 1.0 fallback + alt 1 UMP).
+  - `Adafruit_USBH_MIDI2` (host): wraps `tuh_midi2_*` (per-idx queries + UMP read/write/flush + MountCb/UnmountCb/RxCb registration).
+
+  Both classes do NOT inherit from `Stream` (MIDI 2.0 native is UMP word-oriented, not byte-oriented). Coexist with the legacy `Adafruit_USBD_MIDI` MIDI 1.0 class in the same firmware.
+- Per-chip `tusb_config_<chip>.h` files gain `CFG_TUD_MIDI2` and `CFG_TUH_MIDI2` toggles (default 0). User enables per-sketch via `-DCFG_TUD_MIDI2=1` build flag or `#define` before `#include <Adafruit_TinyUSB.h>`.
+
+### Supported boards (Phase 1, v0.1-midi2)
+
+| Chip | Boards | Status |
+|---|---|---|
+| SAMD21 | XIAO SAMD21, generic SAMD21 | device validated on hardware |
+| nRF52840 | Nice!Nano, Adafruit Feather nRF52840 Express, BlueMicro840 | device validated on hardware |
+| RP2040 | Pico, Adafruit Feather RP2040 (Earle Philhower core, `usbstack=tinyusb`) | device + host (PIO-USB) validated on hardware |
+
+Host class code ships present on all 3 chip families, but **only the RP2040 PIO-USB path is bench-validated** in v0.1-midi2. SAMD21 / nRF52840 host requires an external MAX3421E shield; bench validation deferred to v0.2-midi2 or later.
+
+### Supported boards (Phase 2, v0.2-midi2, planned)
+
+SAMD51, ESP32-S2, ESP32-S3.
+
+### Install
+
+```bash
+cd ~/Arduino/libraries
+git clone -b feat/midi2 https://github.com/sauloverissimo/Adafruit_TinyUSB_Arduino.git
+```
+
+### Smoke test
+
+Open `examples/MIDI2/midi2_test/midi2_test.ino`, pick your board's FQBN, add `-DCFG_TUD_MIDI2=1` to the build flags, compile, flash. The sketch sends a JR Timestamp heartbeat every 500 ms and a NoteOn/Off C4 every 2 s.
+
+For full demos with chromatic walk, Per-Note expression, and MIDI-CI Discovery, pair the fork with the [`midi2_cpp`](https://github.com/sauloverissimo/midi2_cpp) recipes (`xiao-samd21-midi2`, `nrf52840-promicro-midi2`).
+
+### Upstream merge plan
+
+This fork stays internal until TinyUSB PR #3571 merges into `hathach/tinyusb`. The merge sequence then follows the project-wide GATED order: TinyUSB merge, MIDI Association communication, ESP32 PRs, libDaisy PR, Teensy PR, and finally this fork's PR to `adafruit/Adafruit_TinyUSB_Arduino`. Until that window opens, no PR submission to Adafruit upstream.
+
 ## Supported Cores
 
 There are 2 type of supported cores: with and without built-in support for TinyUSB. Built-in support provide seamless integration but requires extra code added to core's source code. Unfortunately it is not always easy or possible to make those modification.
