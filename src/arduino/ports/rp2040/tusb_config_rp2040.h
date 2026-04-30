@@ -93,6 +93,32 @@ extern "C" {
 #ifndef CFG_TUD_MIDI
 #define CFG_TUD_MIDI 1
 #endif
+#ifndef CFG_TUD_MIDI2
+#define CFG_TUD_MIDI2 1
+#endif
+#if CFG_TUD_MIDI2
+#ifndef CFG_TUD_MIDI2_NUM_GROUPS
+#define CFG_TUD_MIDI2_NUM_GROUPS 1
+#endif
+#ifndef CFG_TUD_MIDI2_NUM_FUNCTION_BLOCKS
+#define CFG_TUD_MIDI2_NUM_FUNCTION_BLOCKS 1
+#endif
+#ifndef CFG_TUD_MIDI2_TX_BUFSIZE
+#define CFG_TUD_MIDI2_TX_BUFSIZE 256
+#endif
+#ifndef CFG_TUD_MIDI2_RX_BUFSIZE
+#define CFG_TUD_MIDI2_RX_BUFSIZE 256
+#endif
+#ifndef CFG_TUD_MIDI2_TX_EPSIZE
+#define CFG_TUD_MIDI2_TX_EPSIZE 64
+#endif
+#ifndef CFG_TUD_MIDI2_RX_EPSIZE
+#define CFG_TUD_MIDI2_RX_EPSIZE 64
+#endif
+#endif
+#ifndef CFG_TUH_MIDI2
+#define CFG_TUH_MIDI2 0
+#endif
 #ifndef CFG_TUD_VENDOR
 #define CFG_TUD_VENDOR 1
 #endif
