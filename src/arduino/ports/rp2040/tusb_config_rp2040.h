@@ -90,8 +90,39 @@ extern "C" {
 #ifndef CFG_TUD_HID
 #define CFG_TUD_HID 2
 #endif
+#ifndef CFG_TUD_MIDI2
+#define CFG_TUD_MIDI2 1
+#endif
+// MIDI 1.0 legacy driver must be 0 when MIDI 2.0 driver is enabled.
+// midi2_device.c handles BOTH alt 0 (MIDI 1.0 fallback) and alt 1 (UMP)
+// of the same MIDI Streaming interface. Leaving midi.c also on causes
+// both drivers to claim the same endpoints during SET_CONFIGURATION,
+// triggering Linux to STALL EP0 with "can't set config #1, error -32".
 #ifndef CFG_TUD_MIDI
-#define CFG_TUD_MIDI 1
+#define CFG_TUD_MIDI (CFG_TUD_MIDI2 ? 0 : 1)
+#endif
+#if CFG_TUD_MIDI2
+#ifndef CFG_TUD_MIDI2_NUM_GROUPS
+#define CFG_TUD_MIDI2_NUM_GROUPS 1
+#endif
+#ifndef CFG_TUD_MIDI2_NUM_FUNCTION_BLOCKS
+#define CFG_TUD_MIDI2_NUM_FUNCTION_BLOCKS 1
+#endif
+#ifndef CFG_TUD_MIDI2_TX_BUFSIZE
+#define CFG_TUD_MIDI2_TX_BUFSIZE 256
+#endif
+#ifndef CFG_TUD_MIDI2_RX_BUFSIZE
+#define CFG_TUD_MIDI2_RX_BUFSIZE 256
+#endif
+#ifndef CFG_TUD_MIDI2_TX_EPSIZE
+#define CFG_TUD_MIDI2_TX_EPSIZE 64
+#endif
+#ifndef CFG_TUD_MIDI2_RX_EPSIZE
+#define CFG_TUD_MIDI2_RX_EPSIZE 64
+#endif
+#endif
+#ifndef CFG_TUH_MIDI2
+#define CFG_TUH_MIDI2 0
 #endif
 #ifndef CFG_TUD_VENDOR
 #define CFG_TUD_VENDOR 1
