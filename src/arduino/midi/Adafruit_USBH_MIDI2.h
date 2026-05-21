@@ -49,8 +49,6 @@ public:
 
   Adafruit_USBH_MIDI2(void);
 
-  bool begin(void); // currently a no-op; reserved for future per-class init
-
   // Per-idx queries. Pass the idx value the mount callback delivered.
   bool mounted(uint8_t idx);
   uint8_t protocolVersion(uint8_t idx);  // 0 = MIDI 1.0, 1 = MIDI 2.0
@@ -62,14 +60,22 @@ public:
   uint32_t write(uint8_t idx, const uint32_t *words, uint32_t count);
   uint32_t flush(uint8_t idx);
 
-  // Optional callback registration. When the user calls these, the
-  // wrapper's internal weak overrides of the TinyUSB tuh_midi2_*_cb
-  // functions invoke the registered function pointers. Apps that prefer
-  // to define their own weak overrides directly can leave these unset
-  // and the wrapper's default no-op weak overrides do not compete.
+  // Optional callback registration. The wrapper provides TU_ATTR_WEAK
+  // overrides of tuh_midi2_mount_cb / tuh_midi2_umount_cb /
+  // tuh_midi2_rx_cb; when the user passes a function pointer here the
+  // wrapper's weak override routes the event to it. Users who prefer
+  // the raw TinyUSB pattern can define their own (strong)
+  // tuh_midi2_*_cb in the sketch and the linker will pick that over
+  // the wrapper's weak one. Pass nullptr to a setter to clear a
+  // previously registered callback.
   void setMountCallback(MountCb cb);
   void setUnmountCallback(UnmountCb cb);
   void setRxCallback(RxCb cb);
+
+  // Clear all registered callbacks. Does NOT close any mounted MIDI 2.0
+  // devices (TinyUSB host stack owns that lifecycle); after end(),
+  // tuh_midi2_*_cb events still fire but the wrapper drops them.
+  void end(void);
 };
 
 #endif /* ADAFRUIT_USBH_MIDI2_H_ */

@@ -38,7 +38,11 @@ Adafruit_USBH_MIDI2::RxCb g_rx_cb = nullptr;
 
 Adafruit_USBH_MIDI2::Adafruit_USBH_MIDI2(void) {}
 
-bool Adafruit_USBH_MIDI2::begin(void) { return true; }
+void Adafruit_USBH_MIDI2::end(void) {
+  g_mount_cb = nullptr;
+  g_unmount_cb = nullptr;
+  g_rx_cb = nullptr;
+}
 
 bool Adafruit_USBH_MIDI2::mounted(uint8_t idx) {
   return tuh_midi2_mounted(idx);
@@ -73,25 +77,29 @@ void Adafruit_USBH_MIDI2::setUnmountCallback(UnmountCb cb) {
 }
 void Adafruit_USBH_MIDI2::setRxCallback(RxCb cb) { g_rx_cb = cb; }
 
-// Weak overrides of TinyUSB host-side application callbacks. When the
-// user registers a function pointer through setMountCallback /
+// Weak overrides of the TinyUSB host-side application callbacks. When
+// the user registers a function pointer through setMountCallback /
 // setUnmountCallback / setRxCallback, these stubs route the event.
-// Apps that want their own weak override can simply leave the wrapper's
-// callbacks unset (or supply their own non-weak override that the
-// linker prefers).
+//
+// These overrides are TU_ATTR_WEAK so that users who prefer the raw
+// TinyUSB pattern (defining their own non-weak tuh_midi2_*_cb in their
+// sketch) get the standard "user-defined strong symbol wins over
+// library weak symbol" link resolution. Without TU_ATTR_WEAK here, a
+// user sketch that defines tuh_midi2_mount_cb on its own would fail to
+// link with a multiple-definition error.
 extern "C" {
 
-void tuh_midi2_mount_cb(uint8_t idx, const tuh_midi2_mount_cb_t *info) {
+TU_ATTR_WEAK void tuh_midi2_mount_cb(uint8_t idx, const tuh_midi2_mount_cb_t *info) {
   if (g_mount_cb)
     g_mount_cb(idx, info);
 }
 
-void tuh_midi2_umount_cb(uint8_t idx) {
+TU_ATTR_WEAK void tuh_midi2_umount_cb(uint8_t idx) {
   if (g_unmount_cb)
     g_unmount_cb(idx);
 }
 
-void tuh_midi2_rx_cb(uint8_t idx, uint32_t xferred_bytes) {
+TU_ATTR_WEAK void tuh_midi2_rx_cb(uint8_t idx, uint32_t xferred_bytes) {
   if (g_rx_cb)
     g_rx_cb(idx, xferred_bytes);
 }
