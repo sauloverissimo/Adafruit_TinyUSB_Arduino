@@ -44,6 +44,10 @@
 #include "arduino/midi/Adafruit_USBD_MIDI.h"
 #endif
 
+#if CFG_TUD_MIDI2
+#include "arduino/midi/Adafruit_USBD_MIDI2.h"
+#endif
+
 #if CFG_TUD_MSC
 #include "arduino/msc/Adafruit_USBD_MSC.h"
 #endif
@@ -73,6 +77,10 @@ void TinyUSB_Device_Init(uint8_t rhport);
 
 #if CFG_TUH_MSC
 #include "arduino/msc/Adafruit_USBH_MSC.h"
+#endif
+
+#if CFG_TUH_MIDI2
+#include "arduino/midi/Adafruit_USBH_MIDI2.h"
 #endif
 
 #endif
